@@ -1,171 +1,195 @@
-# Nossas Lojas v2.0
+# Nossas Lojas V2
 
-Programa que guarda informações de lojas físicas de um e-commerce. Guarda informações como id das lojas, nome, endereço, telefone/celular, CNPJ, horário de trabalho, cidade onde se localiza e estado. 
+API de estudo para gerenciar lojas físicas, agora implementada com TypeScript, Express e TypeORM sobre MySQL. Mantém o contexto da [trilha de microsserviços Node.js](https://github.com/myreli/c_trilhas/blob/master/microservices_node/desafio2/README.md), com consultas por identificador, estado e conjunto de cidades.
 
-# Objetivo do Projeto
-O objetivo do projeto é criar uma api em NodeJS atendendo aos requisitos nesse [link](https://github.com/myreli/c_trilhas/blob/master/microservices_node/desafio2/README.md), mas com JavaScript ao invés de Typescript(que será utilizado na [v3](https://github.com/paulodaluz/Nossas-Lojas-v3)). A criação foi feita com os conhecimentos adquiridos nesta [trilha de conhecimento](https://github.com/myreli/c_trilhas/blob/master/microservices_node/README.md).
+[![Node.js](https://img.shields.io/badge/Node.js-339933?logo=node.js&logoColor=white)](https://nodejs.org/)
+[![MIT](https://img.shields.io/badge/license-MIT-blue)](LICENSE)
 
-# Ferramentas Utilizadas
+## 📋 Table of contents
 
- Foi usado o Node.js como principal compilador, e as principais biblotecas utilizadas foram express, body-parse, consign, nodemon, express-validator..., que podem ser baixadas atrasvés do comando ```npm install``` no terminal da pasta. 
- Desenvolvido no windows 7, mas quando executado apartir do docker é executado em linux. E como banco de dados foi usado o MySQL para armazenamento dos dados.
- 
- 
- # Como baixar e executar
- Primeiramente você deve ter o node.js e o banco de dados MYSQL.
- 
- Após clonar o [repositório](https://github.com/paulodaluz/Nossas-Lojas.git), você deve abrir a pasta no terminal e executar o comando "npm install" para instalar todos os pacotes(bibliotecas) usadas  na produção da aplicação.
- 
- #### (Caso o banco de dados não crie automáticamente uma tabela faça os seguintes passos)
- Em seu banco de dados(MySQL) voce deve criar uma database da seguinte forma:
- 
- ```
- CREATE DATABASE XXXXXXXXXXXXX;
- USE XXXXXXXXXXXXX;
- ```
- No lugar de ```XXXXXXXXXXXXX``` você deve colocar o nome da sua database e no campo abaixo você deve colocar o nome escolhido em cima novamente.
- ```Obs:Em meu exemplo usei "lojas" como nome da database.```
- 
- Após isso você devera criar uma tabela da seguinte forma:
- 
- ```
- CREATE TABLE`lista_lojas`(
-`id` int(11) NOT NULL AUTO_INCREMENT,
-`nome_loja` varchar(255) NOT NULL,
-`endereco` varchar(255) NOT NULL,
-`celular` varchar(255) NOT NULL,
-`cnpj` varchar(255) NOT NULL,
-`horarioDeTrabalho` varchar(255) NOT NULL,
-`cidade` varchar(255) NOT NULL,
-`estado` varchar(255) NOT NULL,
-PRIMARY KEY(id)
+- [✨ Features](#features)
+- [🧪 Technologies](#technologies)
+- [🛠️ Environment setup](#environment-setup)
+- [🚀 Getting started](#getting-started)
+- [🐋 Getting started with Docker](#docker)
+- [🔌 API usage](#api)
+- [🗂️ Project structure](#structure)
+- [✅ Testing and quality](#testing)
+- [🔎 Troubleshooting](#troubleshooting)
+- [🤝 Contributing](#contributing)
+- [📜 License](#license)
+
+<a id="features"></a>
+
+## ✨ Features
+
+- Cadastro, edição, remoção e listagem de lojas.
+- Busca por ID, estado e conjunto de cidades de um estado.
+- Validação de dados de entrada e respostas padronizadas para alguns erros.
+- Swagger UI em `/api-docs`, baseado em [Documentacao/swagger.json](Documentacao/swagger.json).
+
+<a id="technologies"></a>
+
+## 🧪 Technologies
+
+Versões declaradas em [package.json](package.json); não há lockfile ou runtime fixado.
+
+| Tecnologia | Declaração | Finalidade |
+| --- | --- | --- |
+| [TypeScript](https://www.typescriptlang.org/docs/) | `^2.8.1` | Compilação de `src/` para `js/` |
+| [Express](https://expressjs.com/) | `^4.16.3` | API HTTP |
+| [TypeORM](https://typeorm.io/) | `^0.2.0` | Entidades e persistência |
+| [mysql](https://github.com/mysqljs/mysql) | `^2.15.0` | Driver MySQL |
+| [swagger-ui-express](https://github.com/scottie1984/swagger-ui-express) | `^4.0.2` | Interface da documentação |
+| [nodemon](https://nodemon.io/) | `1.18.4` | Reinício do servidor |
+| [concurrently](https://github.com/open-cli-tools/concurrently) | `^3.4.0` | Execução conjunta dos observadores |
+
+O campo `version` de `tsconfig.json` não fixa a versão do compilador; a dependência do manifesto é a referência.
+
+<a id="environment-setup"></a>
+
+## 🛠️ Environment setup
+
+Tenha Git, Node.js e MySQL acessível. O repositório não fixa versões de Node ou MySQL. Foi escolhido Node.js 14.21.3 para testar esta base antiga de Express/TypeORM; a compilação ainda depende da compatibilidade entre os intervalos sem lockfile.
+
+```bash
+nvm install 14.21.3
+nvm use 14.21.3
+git clone https://github.com/paulodaluz/NossasLojasV2.git
+cd NossasLojasV2
+npm install
+```
+
+Use npm, como o Dockerfile; não há lockfile para `npm ci`. Não há hooks ou `prepare` e os executáveis são dependências locais.
+
+Configure `host`, `port`, `username`, `password` e `database` em [ormconfig.json](ormconfig.json), usando valores de seu ambiente. A porta MySQL declarada é 3306. Não existe `connectionFactory.js` nesta versão nem carregamento de `.env`.
+
+O arquivo define `synchronize: false` e não há migrações versionadas. Crie uma base de desenvolvimento e a tabela correspondente à entidade `ListaLojas`:
+
+```sql
+CREATE DATABASE lojas_exemplo;
+USE lojas_exemplo;
+CREATE TABLE lista_lojas (
+  id INT NOT NULL AUTO_INCREMENT PRIMARY KEY,
+  nome_loja VARCHAR(255) NOT NULL,
+  endereco VARCHAR(255) NOT NULL,
+  celular VARCHAR(255) NOT NULL,
+  cnpj VARCHAR(255) NOT NULL,
+  horarioDeTrabalho VARCHAR(255) NOT NULL,
+  cidade VARCHAR(255) NOT NULL,
+  estado VARCHAR(255) NOT NULL
 );
 ```
 
- Após a instalação de todos os requisitos acima você deve abrir o arquivo ```connectionFactory.js``` dentro da pasta ```persistencia``` no repositório clonado. Nela voce deve inserir seu usuário e senha dentro da função ```createDBConnection``` como abaixo:
- 
- var mysql = require('mysql');
+Os caminhos de entidades apontam para `js/entity/*.js`; a compilação precisa ocorrer antes da conexão.
+
+<a id="getting-started"></a>
+
+## 🚀 Getting started
+
+Compile usando a dependência local e, se a compilação terminar sem erros, inicie:
+
+```bash
+./node_modules/.bin/tsc
+npm run server
 ```
-function createDBConnection() {
-    return mysql.createConnection({
-        host: 'localhost',
-        user: 'INSIRA O SEU USÚARIO AQUI',
-        password: 'INSIRA SUA SENHA AQUI',
-        database: 'INSIRA O NOME DA SUA DATABASE'
-    });
-}
 
-module.exports = function () {
-    return createDBConnection;
-}
+Para desenvolvimento, `npm start` executa `npm run watch` (`tsc -w`) e `npm run server` (`nodemon js/index.js`) em paralelo. Não há script `build` ou `start:prod`; `node js/index.js` executa diretamente o resultado compilado.
+
+O servidor escuta **3000**, após conseguir conectar ao MySQL. Acesse `http://localhost:3000/api-docs`; a raiz redireciona para essa página. Uma consulta de integração é:
+
+```bash
+curl http://localhost:3000/listaLojas
 ```
- 
- 
- ## Como Utilizar
- 
-  Para testar, fazer consultas você deverá utilizar o app ```Postman```.
- Antes de fazer os testes a seguir você deverá executar o seguinte processo:
 
- - Entrar na pasta do projeto no terminal;
- - Botar para rodar a aplicação com o comando ```nodemon index.js```.
- - É recomendado tambem estár com o MySQL aberto para poder ver as alterações no banco de dados.
- 
- 
- ### Cria Loja
-  
- Para criar uma nova loja e cadastra-la, você deverá selecionar o método ```POST``` no ```Postman``` e deverá:
- 
- - Inserir a URL: http://localhost:3000/criaLoja;
- - Na aba Headers você deverá usar ```Content-Type```;
- - Na aba ```Body``` deverá selecionar o modo ```raw``` e selecionar o ```JSON(application/json)```;
- - E no campo abaixo você irá inserir os dados da loja, passando-os como no exemplo:
- ```
- {
-    "nome_loja": "Loja A",
-    "endereco": "Rua Abc, 000",
-    "celular": "00 0000 0000",
-    "cnpj": "00.000.000/0000-00",
-    "horarioDeTrabalho": "Diariamente das 11hs às 23hs",
-    "cidade": "Cidade ABC",
-    "estado": "A"
-}
- ```
- Após isso, você irá notar que foi acrescentado em seu banco de dados, na tabela as informações e irá retornar que a tabela foi criada em seu console!
- 
- 
- ### Edita Loja
- 
- Para editar uma loja, você deverá selecionar o método ```PUT``` no ```Postman``` e deverá:
- - Inserir a URL: http://localhost:3000/editaLoja/{id} passando o ```ID``` da loja que deseja editar no lugar de ```{id}```;
- - Na aba Headers você deverá usar ```Content-Type```;
- - Na aba ```Body``` deverá selecionar o modo ```raw``` e selecionar o ```JSON(application/json)```;
- - E no campo abaixo você irá inserir os NOVOS dados da loja, passando-os como no exemplo:
-  ```
- {
-    "nome_loja": "Loja B",
-    "endereco": "Rua Cba, 001",
-    "celular": "11 1111 1111",
-    "cnpj": "00.000.000/0000-01",
-    "horarioDeTrabalho": "Diariamente das 14hs às 22hs",
-    "cidade": "Cidade ABC",
-    "estado": "A"
-}
- ```
- 
- Assim que você atualizar seu banco de dados ira ver que sua tabela foi atualizada com sucesso!
+Não há endpoint de saúde independente do banco. Encerre os processos com `Ctrl+C`.
 
- ### Deleta Loja
- Para deletar uma loja, você irá selecionar o método ```DELETE``` no ```Postman``` e deverá:
- - Inserir a URL: http://localhost:3000/deletaLoja/{id} passando o ```ID``` da loja que deseja deletar no lugar de ```{id}```;
- - Na aba Headers você deverá usar ```Content-Type```.
- 
- Após a atualização da tabela você irá notar que foi deletada a loja com o ```ID``` correspondente ao que foi passado.
- 
- 
- ### Busca por ID
- Para buscar uma loja pelo ```ID```, você deverá selecionar o método ```GET``` no ```Postman``` e deverá:
- - Inserir a URL: http://localhost:3000/buscaId/{id} passando o ```ID``` da loja que deseja buscar no lugar de ```{id}```;
- - Na aba Headers você deverá usar ```Content-Type```.
- 
- E você irá perceber que retornou no Body as informações da loja cujo o ```ID``` correspondente ao que foi passado.
- 
- 
- ### Busca por Estado
- Para buscar uma loja pelo ```estado```, você deverá selecionar o método ```GET``` no ```Postman``` e deverá:
- - Inserir a URL: http://localhost:3000/buscaEstado/{estado} passando o ```Estado``` da loja que deseja buscar, no lugar de ```{estado}```.
- - Na aba Headers você deverá usar ```Content-Type```;
- 
- E você irá perceber que retornou no Body as informações da loja cujo o ```Estado``` correspondente ao que foi passado.
- 
- 
- ### Busca por Estado e Cidades
- Para buscar uma loja pelo ```estado``` e ```cidade```, você deverá selecionar o método ```PUT``` no ```Postman``` e deverá: 
- - Inserir a URL: http://localhost:3000/buscaPorCidades/{estado} passando o ```Estado``` da loja que deseja pesquisar no lugar de ```{estado}```;
- - Na aba Headers você deverá usar ```Content-Type```;
- - Na aba ```Body``` deverá selecionar o modo ```raw``` e selecionar o ```JSON(application/json)```;
- - E no campo abaixo você irá inserir as cidades de uma loja que deseja buscar, passando-os como no exemplo:
-  
-  ```
-  {
-"cidades" : [
-"BRASIL", "Passo Fundo", "Carazinho", "Marau", "America"
-]
-}
-  ```
-E você irá perceber que retornou no Body as informações da(s) loja(s) cujo o ```Estado``` e a(s) ```Cidades``` correspondentes ao que foi passado.
-  
-  
- ### Listar Todas as Lojas:
- Para listar todas as lojas, você deverá selecionar o método ```GET``` no ```Postman``` e deverá:
-  - Inserir a URL: http://localhost:3000/listaLojas .
-   
-E você irá perceber que retornou no Body todas as lojas cadastradas no banco de dados.
-   
-   
-  Caso queira ver minha ```Collection``` no ```Postman``` é só clicar [aqui](https://www.getpostman.com/collections/23eb7722c81005614987).
-  
-  ###Complemento
-  - Clicando [aqui](https://cloud.docker.com/u/paulera25/repository/docker/paulera25/ecommerce), você poderá ver a imagem do NodeJs no DockerHub sendo executada no servidor.
-  - Caso queria ver a documentação deste projeto em uma API no Swagger, basta apenas baixar o arquivo ```swagger-Paulo.yaml``` disponivel em [meu repositório](https://github.com/paulodaluz/Nossas-Lojas.git) no GitHub e importa-lo no site do [Swagger](https://editor.swagger.io/).
-  
- 
+<a id="docker"></a>
+
+## 🐋 Getting started with Docker
+
+```bash
+docker build -f node.dockerfile -t nossas-lojas-v2 .
+docker run --name nossas-lojas-v2 -p 3000:3000 nossas-lojas-v2
+docker stop nossas-lojas-v2
+docker rm nossas-lojas-v2
+```
+
+**Inspeção somente: comandos Docker não executados nesta tarefa.** O contexto é a raiz, a base é `node:latest` e a entrada é `npm start`, com os observadores de compilação e servidor. Não há Compose, banco ou volumes definidos. Configure um MySQL alcançável pelo container; `localhost` dentro dele não é o host.
+
+O Dockerfile copia o repositório inteiro e desabilita a verificação TLS do npm. A versão flutuante de Node pode divergir do ambiente de validação. Essas configurações, bem como a proteção de arquivos com credenciais no contexto, precisam de revisão separada.
+
+<a id="api"></a>
+
+## 🔌 API usage
+
+Não há autenticação nas rotas. Use `Content-Type: application/json` nos corpos.
+
+| Método | Caminho | Uso |
+| --- | --- | --- |
+| POST | `/criaLoja` | Criar |
+| PUT | `/editaLoja/:id` | Editar |
+| DELETE | `/deletaLoja/:id` | Remover |
+| GET | `/buscaPorId/:id` | Buscar por ID |
+| GET | `/buscaPorEstado/:estado` | Buscar por estado |
+| POST | `/buscaPorCidades/:estado` | Buscar cidades informadas no corpo |
+| GET | `/listaLojas` | Listar todas |
+| GET | `/` | Redirecionar para `/api-docs` |
+
+Exemplo de consulta por cidades, após configurar o banco:
+
+```bash
+curl -X POST http://localhost:3000/buscaPorCidades/SP   -H 'Content-Type: application/json'   -d '{"cidades":["Cidade Exemplo","Outra Cidade"]}'
+```
+
+Cadastro e edição recebem `nome_loja`, `endereco`, `celular`, `cnpj`, `horarioDeTrabalho`, `cidade` e `estado`, todos como texto. A validação está em [src/models/Validacao.ts](src/models/Validacao.ts); o CNPJ exige 18 caracteres e o estado, dois. Confira os contratos antigos contra `src/rotas.ts` antes de importar requisições.
+
+<a id="structure"></a>
+
+## 🗂️ Project structure
+
+| Caminho | Responsabilidade |
+| --- | --- |
+| `src/index.ts` | Conexão, Swagger e inicialização HTTP |
+| `src/rotas.ts` | Métodos e caminhos |
+| `src/controller/Controler.ts` | Operações sobre lojas |
+| `src/entity/ListaLojas.ts` | Modelo persistido |
+| `src/models/` | Validação e respostas |
+| `ormconfig.json` | MySQL e caminhos compilados |
+| `Documentacao/` | Especificação Swagger |
+| `js/` | Saída gerada pelo TypeScript |
+
+<a id="testing"></a>
+
+## ✅ Testing and quality
+
+Não existem scripts de testes, lint ou formatação. `./node_modules/.bin/tsc` é a verificação de compilação disponível.
+
+Instalação concluída com Node.js 14.21.3/npm 6.14.18. `./node_modules/.bin/tsc` falhou (código 2) em tipos de dependências atuais, incompatíveis com o compilador antigo. Mesmo com erros, foram emitidos arquivos em `js/`; tentar `node js/index.js` registrou `ECONNREFUSED 127.0.0.1:3306` e encerrou sem abrir o HTTP. A saída de processo 0 nesse caso não significa inicialização bem-sucedida. API, persistência e Swagger não foram verificados. Captura de backend pendente, pois VS Code e aparência atual do usuário não puderam ser confirmados. Docker não foi executado.
+
+<a id="troubleshooting"></a>
+
+## 🔎 Troubleshooting
+
+| Situação | Verificação |
+| --- | --- |
+| Erros TypeScript em dependências | O projeto não trava versões; tipos atuais podem exceder a sintaxe aceita pelo TypeScript 2. A correção de dependências deve ser avaliada separadamente. |
+| `js/index.js` ausente | Confira a compilação e o `outDir` em `tsconfig.json`. |
+| `TypeORM connection error` | Revise o MySQL e `ormconfig.json`; as rotas só são registradas após conectar. |
+| Tabela ausente | `synchronize` está desativado e não há migrações; prepare a tabela em uma base de desenvolvimento. |
+
+<a id="contributing"></a>
+
+## 🤝 Contributing
+
+Crie uma branch a partir de `master`, valide a instalação e os cenários afetados em um banco de desenvolvimento próprio e abra um pull request descrevendo os resultados. Correções de código e atualizações de dependências são entregas separadas. Não publique credenciais nem dados reais.
+
+<a id="license"></a>
+
+## 📜 License
+
+O projeto está sob a [licença MIT](LICENSE), com copyright de 2021 de Paulo da Luz. O manifesto conserva os créditos do exemplo TypeORM de Umed Khudoiberdiev que serviu de base; esses avisos foram preservados.
+
+---
+
+<p align="center">Made with 💜 by <a href="https://github.com/paulodaluz">Paulo da Luz</a></p>
